@@ -56,10 +56,13 @@ public:
 
 	VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
 	VkImage createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags useFlags,
-		VkMemoryPropertyFlags propFlags, VkDeviceMemory* imageMemory);
+		VkMemoryPropertyFlags propFlags, VkDeviceMemory* imageMemory, VkSampleCountFlagBits samples);
 	uint32_t findMemoryTypeIndex(VkPhysicalDevice physicalDevice, uint32_t allowedTypes, VkMemoryPropertyFlags properties);
 	SwapChainDetails getSwapChainDetails(VkPhysicalDevice device);
 
+
+	VkSampleCountFlagBits getMaxUsableSampleCount();
+	VkSampleCountFlagBits msaaSamples = VK_SAMPLE_COUNT_1_BIT;
 
 	void cleanup();
 

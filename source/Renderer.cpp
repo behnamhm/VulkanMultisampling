@@ -34,9 +34,10 @@ int Renderer::init(GLFWwindow* newWindow)
 		vulkanDescriptors.createDescriptorSetLayout();
 
 		vulkanPipeline.createPushConstantRange(sizeof(model));
+
 		vulkanPipeline.createGraphicsPipeline(vulkanSwapchain.swapChainExtent);
 
-		vulkanBuffer.createColourBufferImage(vulkanSwapchain.swapChainImages.size(), vulkanSwapchain.swapChainExtent);
+		vulkanBuffer.createColourBufferImage(vulkanSwapchain.swapChainImages.size(), vulkanSwapchain.swapChainExtent, vulkanSwapchain.swapChainImageFormat);
 		vulkanBuffer.createDepthBufferImage(vulkanSwapchain.swapChainImages.size(), vulkanSwapchain.swapChainExtent);
 
 		vulkanDescriptors.createDescriptorPool(vulkanSwapchain.swapChainImages.size(), 
@@ -56,7 +57,7 @@ int Renderer::init(GLFWwindow* newWindow)
 		texture.createTextureSampler(vulkanDevice);
 
 		uboViewProjection.projection = glm::perspective(glm::radians(45.0f), (float)vulkanSwapchain.swapChainExtent.width / (float)vulkanSwapchain.swapChainExtent.height, 0.1f, 100.0f);
-		uboViewProjection.view = glm::lookAt(glm::vec3(10.0f, 0.0f, 20.0f), glm::vec3(0.0f, 0.0f, -2.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		uboViewProjection.view = glm::lookAt(glm::vec3(10.0f, 0.0f, 20.0f), glm::vec3(0.0f, 0.0f, -17.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
 		uboViewProjection.projection[1][1] *= -1;
 
@@ -65,6 +66,7 @@ int Renderer::init(GLFWwindow* newWindow)
 
 		// Create our default "no texture" texture
 		texture.createTexture("plain.png", vulkanBuffer, vulkanCommand, vulkanDevice, vulkanDescriptors);
+
 	}
 	catch (const std::runtime_error& e) {
 		printf("ERROR: %s\n", e.what());
@@ -142,8 +144,6 @@ void Renderer::update()
 	deltaTime = now - lastTime;
 	lastTime = now;
 
-	angle += 10.0f * deltaTime;
-	if (angle > 360.0f) { angle -= 360.0f; }
 	glm::mat4 testMat = glm::rotate(glm::mat4(1.0f), glm::radians(angle), glm::vec3(0.0f, 1.0f, 0.0f));
 	testMat = glm::rotate(testMat, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 	model.updateModel(benchModel, testMat);
@@ -226,14 +226,7 @@ void Renderer::recordCommands(uint32_t currentImage)
 		}
 	}
 
-	// Start second subpass
-	vkCmdNextSubpass(vulkanCommand.commandBuffers[currentImage], VK_SUBPASS_CONTENTS_INLINE);
-
-	vkCmdBindPipeline(vulkanCommand.commandBuffers[currentImage], VK_PIPELINE_BIND_POINT_GRAPHICS, vulkanPipeline.secondPipeline);
-	vkCmdBindDescriptorSets(vulkanCommand.commandBuffers[currentImage], VK_PIPELINE_BIND_POINT_GRAPHICS, vulkanPipeline.secondPipelineLayout,
-		0, 1, &vulkanDescriptors.inputDescriptorSets[currentImage], 0, nullptr);
-	vkCmdDraw(vulkanCommand.commandBuffers[currentImage], 3, 1, 0, 0);
-
+	
 	// End Render Pass
 	vkCmdEndRenderPass(vulkanCommand.commandBuffers[currentImage]);
 
@@ -277,7 +270,6 @@ void Renderer::createFramebuffers()
 		}
 	}
 }
-
 
 
 

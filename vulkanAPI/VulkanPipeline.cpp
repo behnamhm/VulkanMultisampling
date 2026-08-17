@@ -139,7 +139,7 @@ void VulkanPipeline::createGraphicsPipeline(VkExtent2D &swapChainExtent)
 	VkPipelineMultisampleStateCreateInfo multisamplingCreateInfo = {};
 	multisamplingCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
 	multisamplingCreateInfo.sampleShadingEnable = VK_FALSE;					// Enable multisample shading or not
-	multisamplingCreateInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;	// Number of samples to use per fragment
+	multisamplingCreateInfo.rasterizationSamples = vulkanDevice.msaaSamples;	// Number of samples to use per fragment
 
 
 	// -- BLENDING --
@@ -149,7 +149,7 @@ void VulkanPipeline::createGraphicsPipeline(VkExtent2D &swapChainExtent)
 	VkPipelineColorBlendAttachmentState colourState = {};
 	colourState.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT	// Colours to apply blending to
 		| VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-	colourState.blendEnable = VK_TRUE;													// Enable blending
+	colourState.blendEnable = VK_FALSE;													// Enable blending
 
 	// Blending uses equation: (srcColorBlendFactor * new colour) colorBlendOp (dstColorBlendFactor * old colour)
 	colourState.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
@@ -230,59 +230,6 @@ void VulkanPipeline::createGraphicsPipeline(VkExtent2D &swapChainExtent)
 	vkDestroyShaderModule(vulkanDevice.logicalDevice, fragmentShaderModule, nullptr);
 	vkDestroyShaderModule(vulkanDevice.logicalDevice, vertexShaderModule, nullptr);
 
-
-	// CREATE SECOND PASS PIPELINE
-	// Second pass shaders
-	auto secondVertexShaderCode = fileSystem.readFile("assets/shaders/second_vert.spv");
-	auto secondFragmentShaderCode = fileSystem.readFile("assets/shaders/second_frag.spv");
-
-	// Build shaders
-	VkShaderModule secondVertexShaderModule = createShaderModule(secondVertexShaderCode);
-	VkShaderModule secondFragmentShaderModule = createShaderModule(secondFragmentShaderCode);
-
-	// Set new shaders
-	vertexShaderCreateInfo.module = secondVertexShaderModule;
-	fragmentShaderCreateInfo.module = secondFragmentShaderModule;
-
-	VkPipelineShaderStageCreateInfo secondShaderStages[] = { vertexShaderCreateInfo, fragmentShaderCreateInfo };
-
-	// No vertex data for second pass
-	vertexInputCreateInfo.vertexBindingDescriptionCount = 0;
-	vertexInputCreateInfo.pVertexBindingDescriptions = nullptr;
-	vertexInputCreateInfo.vertexAttributeDescriptionCount = 0;
-	vertexInputCreateInfo.pVertexAttributeDescriptions = nullptr;
-
-	// Don't want to write to depth buffer
-	depthStencilCreateInfo.depthWriteEnable = VK_FALSE;
-
-	// Create new pipeline layout
-	VkPipelineLayoutCreateInfo secondPipelineLayoutCreateInfo = {};
-	secondPipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	secondPipelineLayoutCreateInfo.setLayoutCount = 1;
-	secondPipelineLayoutCreateInfo.pSetLayouts = &vulkanDescriptors.inputSetLayout;
-	secondPipelineLayoutCreateInfo.pushConstantRangeCount = 0;
-	secondPipelineLayoutCreateInfo.pPushConstantRanges = nullptr;
-
-	result = vkCreatePipelineLayout(vulkanDevice.logicalDevice, &secondPipelineLayoutCreateInfo, nullptr, &secondPipelineLayout);
-	if (result != VK_SUCCESS)
-	{
-		throw std::runtime_error("Failed to create a Pipeline Layout!");
-	}
-
-	pipelineCreateInfo.pStages = secondShaderStages;	// Update second shader stage list
-	pipelineCreateInfo.layout = secondPipelineLayout;	// Change pipeline layout for input attachment descriptor sets
-	pipelineCreateInfo.subpass = 1;						// Use second subpass
-
-	// Create second pipeline
-	result = vkCreateGraphicsPipelines(vulkanDevice.logicalDevice, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &secondPipeline);
-	if (result != VK_SUCCESS)
-	{
-		throw std::runtime_error("Failed to create a Graphics Pipeline!");
-	}
-
-	// Destroy second shader modules
-	vkDestroyShaderModule(vulkanDevice.logicalDevice, secondFragmentShaderModule, nullptr);
-	vkDestroyShaderModule(vulkanDevice.logicalDevice, secondVertexShaderModule, nullptr);
 }
 
 VkShaderModule VulkanPipeline::createShaderModule(const std::vector<char>& code)
@@ -316,21 +263,10 @@ void VulkanPipeline::createPushConstantRange(int size)
 
 void VulkanPipeline::cleanup()
 {
-	vkDestroyPipeline(
-		vulkanDevice.logicalDevice,
-		secondPipeline,
-		nullptr
-	);
 
 	vkDestroyPipeline(
 		vulkanDevice.logicalDevice,
 		graphicsPipeline,
-		nullptr
-	);
-
-	vkDestroyPipelineLayout(
-		vulkanDevice.logicalDevice,
-		secondPipelineLayout,
 		nullptr
 	);
 

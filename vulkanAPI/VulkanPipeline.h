@@ -20,13 +20,13 @@ public:
 
     VkShaderModule createShaderModule(const std::vector<char>& code);
     void createPushConstantRange(int size);
+    VkSampleCountFlagBits getMaxUsableSampleCount();
     void cleanup();
     VkPipeline graphicsPipeline;
     VkPipelineLayout pipelineLayout;
 
-    VkPipeline secondPipeline;
-    VkPipelineLayout secondPipelineLayout;
     VkPushConstantRange pushConstantRange;
+
 
 private:
     FileSystem fileSystem;

@@ -120,14 +120,14 @@ void VulkanBuffer::createDepthBufferImage(uint32_t swapChainSize, VkExtent2D& sw
 		// Create Depth Buffer Image
 		depthBufferImage[i] = vulkanDevice.createImage(swapChainExtent.width, swapChainExtent.height, depthFormat, VK_IMAGE_TILING_OPTIMAL,
 			VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-			&depthBufferImageMemory[i]);
+			&depthBufferImageMemory[i], vulkanDevice.msaaSamples);
 
 		// Create Depth Buffer Image View
 		depthBufferImageView[i] = vulkanDevice.createImageView(depthBufferImage[i], depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
 	}
 }
 
-void VulkanBuffer::createColourBufferImage(uint32_t swapChainSize, VkExtent2D &swapChainExtent)
+void VulkanBuffer::createColourBufferImage(uint32_t swapChainSize, VkExtent2D &swapChainExtent, VkFormat& swapChainImageFormat)
 {
 	// Resize supported format for colour attachment
 	colourBufferImage.resize(swapChainSize);
@@ -135,18 +135,14 @@ void VulkanBuffer::createColourBufferImage(uint32_t swapChainSize, VkExtent2D &s
 	colourBufferImageView.resize(swapChainSize);
 
 	// Get supported format for colour attachment
-	VkFormat colourFormat = vulkanDevice.chooseSupportedFormat(
-		{ VK_FORMAT_R8G8B8A8_UNORM },
-		VK_IMAGE_TILING_OPTIMAL,
-		VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
-	);
+	VkFormat colourFormat = swapChainImageFormat;
 
 	for (size_t i = 0; i < swapChainSize; i++)
 	{
 		// Create Colour Buffer Image
 		colourBufferImage[i] = vulkanDevice.createImage(swapChainExtent.width, swapChainExtent.height, colourFormat, VK_IMAGE_TILING_OPTIMAL,
 			VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-			&colourBufferImageMemory[i]);
+			&colourBufferImageMemory[i], vulkanDevice.msaaSamples);
 
 		// Create Colour Buffer Image View
 		colourBufferImageView[i] = vulkanDevice.createImageView(colourBufferImage[i], colourFormat, VK_IMAGE_ASPECT_COLOR_BIT);

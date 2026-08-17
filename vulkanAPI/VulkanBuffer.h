@@ -21,7 +21,7 @@ public:
 
 	void updateUniformBuffers(uint32_t imageIndex,  UboViewProjection& uboViewProjection);
 
-	void createColourBufferImage(uint32_t swapChainSize, VkExtent2D& swapChainExtent);
+	void createColourBufferImage(uint32_t swapChainSize, VkExtent2D& swapChainExtent, VkFormat& swapChainImageFormat);
 	void createDepthBufferImage(uint32_t swapChainSize, VkExtent2D& swapChainExtent);
 
 

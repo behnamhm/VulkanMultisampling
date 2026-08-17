@@ -31,6 +31,7 @@ void VulkanDevice::getPhysicalDevice()
 		if (checkDeviceSuitable(device))
 		{
 			physicalDevice = device;
+			msaaSamples = getMaxUsableSampleCount();
 			break;
 		}
 	}
@@ -297,7 +298,7 @@ VkImageView VulkanDevice::createImageView(VkImage image, VkFormat format, VkImag
 
 
 VkImage VulkanDevice::createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags useFlags,
-	VkMemoryPropertyFlags propFlags, VkDeviceMemory* imageMemory)
+								VkMemoryPropertyFlags propFlags, VkDeviceMemory* imageMemory, VkSampleCountFlagBits samples)
 {
 	// CREATE IMAGE
 	// Image Creation Info
@@ -313,7 +314,7 @@ VkImage VulkanDevice::createImage(uint32_t width, uint32_t height, VkFormat form
 	imageCreateInfo.tiling = tiling;									// How image data should be "tiled" (arranged for optimal reading)
 	imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;			// Layout of image data on creation
 	imageCreateInfo.usage = useFlags;									// Bit flags defining what image will be used for
-	imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;					// Number of samples for multi-sampling
+	imageCreateInfo.samples = samples;					// Number of samples for multi-sampling
 	imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;			// Whether image can be shared between queues
 
 	// Create image
@@ -365,6 +366,23 @@ uint32_t VulkanDevice::findMemoryTypeIndex(VkPhysicalDevice physicalDevice, uint
 			return i;
 		}
 	}
+}
+
+
+VkSampleCountFlagBits VulkanDevice::getMaxUsableSampleCount()
+{
+	VkPhysicalDeviceProperties physicalDeviceProperties;
+	vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
+
+	VkSampleCountFlags counts = physicalDeviceProperties.limits.framebufferColorSampleCounts & physicalDeviceProperties.limits.framebufferDepthSampleCounts;
+	if (counts & VK_SAMPLE_COUNT_64_BIT) { return VK_SAMPLE_COUNT_64_BIT; }
+	if (counts & VK_SAMPLE_COUNT_32_BIT) { return VK_SAMPLE_COUNT_32_BIT; }
+	if (counts & VK_SAMPLE_COUNT_16_BIT) { return VK_SAMPLE_COUNT_16_BIT; }
+	if (counts & VK_SAMPLE_COUNT_8_BIT) { return VK_SAMPLE_COUNT_8_BIT; }
+	if (counts & VK_SAMPLE_COUNT_4_BIT) { return VK_SAMPLE_COUNT_4_BIT; }
+	if (counts & VK_SAMPLE_COUNT_2_BIT) { return VK_SAMPLE_COUNT_2_BIT; }
+
+	return VK_SAMPLE_COUNT_1_BIT;
 }
 
 

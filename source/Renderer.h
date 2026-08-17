@@ -32,9 +32,8 @@ public:
 	void update();
 
 	void createFramebuffers();
-
-
 	void recordCommands(uint32_t currentImage);
+
 
 	~Renderer();
 
@@ -58,7 +57,7 @@ private:
 	int currentFrame = 0;
 	int benchModel = 0;
 
-	float angle = 0.0f;
+	float angle = 50.0f;
 	float deltaTime = 0.0f;
 	float lastTime = 0.0f;
 
